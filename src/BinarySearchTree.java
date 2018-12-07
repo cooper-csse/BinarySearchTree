@@ -1,3 +1,6 @@
+import java.util.ArrayList;
+import java.util.Iterator;
+
 /**
  * 
  * Implementation of most of the Set interface operations using a Binary Search Tree
@@ -20,7 +23,7 @@ public class BinarySearchTree<T> {
 	void setRoot(BinaryNode n) {
 		this.root = n;
 	}
-	
+
 	// Not private, since we need access for manual testing.
 	class BinaryNode {
 		private T data;
@@ -63,7 +66,53 @@ public class BinarySearchTree<T> {
 		
 	}
 
-	// TODO: Implement your 3 iterator classes here, plus any other inner helper classes you'd like. 
-	 
+	// TODO: Implement your 3 iterator classes here, plus any other inner helper classes you'd like.
+	public boolean isEmpty() {
+		return false;
+	}
+
+	public int size() {
+		return 0;
+	}
+
+	public int height() {
+		return 0;
+	}
+
+	public boolean insert(T item) {
+		return false;
+	}
+
+	public boolean contains(T item) {
+		return false;
+	}
+
+	public boolean remove(T item) {
+		return false;
+	}
+
+	public boolean containsNonBST(T item) {
+		return false;
+	}
+
+	public Iterator inefficientIterator() {
+		return null;
+	}
+
+	public Iterator preOrderIterator() {
+		return null;
+	}
+
+	public Iterator iterator() {
+		return null;
+	}
+
+	public ArrayList<Integer> toArrayList() {
+		return null;
+	}
+
+	public T[] toArray() {
+		return null;
+	}
 
 }
