@@ -76,7 +76,7 @@ public class BinarySearchTree<T> {
 		
 	// TODO: Implement your 3 iterator classes here, plus any other inner helper classes you'd like.
 	public boolean isEmpty() {
-		return false;
+		return this.root == NULL_NODE;
 	}
 
 	public int size() {
