@@ -10,13 +10,15 @@ import java.util.Iterator;
  */
 
 public class BinarySearchTree<T> {
+	// Most of you will prefer to use NULL NODES once you see how to use them.
+	private final BinaryNode NULL_NODE = new BinaryNode();
 	private BinaryNode root;
 
 	// Most of you will prefer to use NULL NODES once you see how to use them.
 	// private final BinaryNode NULL_NODE = new BinaryNode();
 
 	public BinarySearchTree() {
-		root = null; // NULL_NODE;
+		root = NULL_NODE;
 	}
 
 	// For manual tests only
@@ -38,8 +40,8 @@ public class BinarySearchTree<T> {
 
 		public BinaryNode(T element) {
 			this.data = element;
-			this.left = null;//NULL_NODE;
-			this.right = null;//NULL_NODE;
+			this.left = NULL_NODE;
+			this.right = NULL_NODE;
 		}
 
 		public T getData() {
