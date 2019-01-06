@@ -1,5 +1,7 @@
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Stack;
 
 /**
  * 
@@ -9,14 +11,90 @@ import java.util.Iterator;
  * @param <T>
  */
 
-public class BinarySearchTree<T> {
+public class BinarySearchTree<T> implements Iterable<T> {
+	// Most of you will prefer to use NULL NODES once you see how to use them.
+	private final BinaryNode NULL_NODE = new BinaryNode();
 	private BinaryNode root;
 
-	// Most of you will prefer to use NULL NODES once you see how to use them.
-	// private final BinaryNode NULL_NODE = new BinaryNode();
+	private class ArrayListIterator implements Iterator<T> {
+		private ArrayList<T> array;
+		private int index = 0;
+		private int length;
+		// Store all the values in the tree in an ArrayList
+		public ArrayListIterator(BinarySearchTree binarySearchTree) {
+			this.array = binarySearchTree.toArrayList();
+			this.length = this.array.size();
+		}
+
+		@Override
+		public boolean hasNext() {
+			return this.index < this.length;
+		}
+
+		@Override
+		public T next() throws NoSuchElementException {
+			if (!this.hasNext()) throw new NoSuchElementException();
+			return this.array.get(this.index++);
+		}
+	}
+
+	private class PreOrderIterator implements Iterator<T> {
+		private Stack<BinaryNode> stack;
+
+		public PreOrderIterator(BinaryNode node) {
+			this.stack = new Stack<>();
+			if (node != NULL_NODE) this.stack.push(node);
+		}
+
+		@Override
+		public boolean hasNext() {
+			return this.stack.size() != 0;
+		}
+
+		@Override
+		public T next() throws NoSuchElementException {
+			if (!this.hasNext()) throw new NoSuchElementException();
+			BinaryNode node = this.stack.pop();
+			if (node.right != NULL_NODE)
+				this.stack.push(node.getRight());
+			if (node.left != NULL_NODE)
+				this.stack.push(node.getLeft());
+			return node.data;
+		}
+	}
+
+	private class InOrderIterator implements Iterator<T> {
+		private Stack<BinaryNode> stack;
+
+		public InOrderIterator(BinaryNode node) {
+			this.stack = new Stack<>();
+			this.addLefts(node);
+		}
+
+		@Override
+		public boolean hasNext() {
+			return this.stack.size() != 0;
+		}
+
+		@Override
+		public T next() throws NoSuchElementException {
+			if (!this.hasNext()) throw new NoSuchElementException();
+			BinaryNode node = this.stack.pop();
+			this.addLefts(node.right);
+			return node.data;
+		}
+
+		private void addLefts(BinaryNode node) {
+			BinaryNode n = node;
+			while (n != NULL_NODE) {
+				this.stack.push(n);
+				n = n.left;
+			}
+		}
+	}
 
 	public BinarySearchTree() {
-		root = null; // NULL_NODE;
+		root = NULL_NODE;
 	}
 
 	// For manual tests only
@@ -38,8 +116,8 @@ public class BinarySearchTree<T> {
 
 		public BinaryNode(T element) {
 			this.data = element;
-			this.left = null;//NULL_NODE;
-			this.right = null;//NULL_NODE;
+			this.left = NULL_NODE;
+			this.right = NULL_NODE;
 		}
 
 		public T getData() {
@@ -63,20 +141,28 @@ public class BinarySearchTree<T> {
 		public void setRight(BinaryNode right) {
 			this.right = right;
 		}
+
+		public int size() {
+			return this == NULL_NODE ? 0 : 1 + this.left.size() + this.right.size();
+		}
+
+		public int height() {
+			return this == NULL_NODE ? 0 : 1 + Math.max(this.left.height(), this.right.height());
+		}
 		
 	}
 
 	// TODO: Implement your 3 iterator classes here, plus any other inner helper classes you'd like.
 	public boolean isEmpty() {
-		return false;
+		return this.root == NULL_NODE;
 	}
 
 	public int size() {
-		return 0;
+		return this.root.size();
 	}
 
 	public int height() {
-		return 0;
+		return this.root.height() - 1;
 	}
 
 	public boolean insert(T item) {
@@ -92,27 +178,47 @@ public class BinarySearchTree<T> {
 	}
 
 	public boolean containsNonBST(T item) {
+		for (Object node : this) {
+			if (node == item) return true;
+		}
 		return false;
 	}
 
 	public Iterator inefficientIterator() {
-		return null;
+		return new ArrayListIterator(this);
 	}
 
 	public Iterator preOrderIterator() {
-		return null;
+		return new PreOrderIterator(this.root);
 	}
 
 	public Iterator iterator() {
-		return null;
+		return new InOrderIterator(this.root);
 	}
 
-	public ArrayList<Integer> toArrayList() {
-		return null;
+	public ArrayList<Object> toArrayList() {
+		ArrayList<Object> arrayList = new ArrayList<>();
+		for (Object item : this) {
+			arrayList.add(item);
+		}
+		return arrayList;
 	}
 
-	public T[] toArray() {
-		return null;
+	public Object[] toArray() {
+		Object[] array = new Object[this.size()];
+		int i = 0;
+		for (Object item : this) {
+			array[i] = item;
+			i++;
+		}
+		return array;
 	}
 
+	public String toString() {
+		String output = "";
+		for (Object item : this) {
+			output += item + ", ";
+		}
+		return "[" + output.substring(0, Math.max(0, output.length() - 2)) + "]";
+	}
 }
