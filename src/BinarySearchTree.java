@@ -65,8 +65,10 @@ public class BinarySearchTree<T> {
 		public void setRight(BinaryNode right) {
 			this.right = right;
 		}
-		
-	}
+
+		public int size() {
+			return this == NULL_NODE ? 0 : 1 + this.left.size() + this.right.size();
+		}
 
 	// TODO: Implement your 3 iterator classes here, plus any other inner helper classes you'd like.
 	public boolean isEmpty() {
@@ -74,7 +76,7 @@ public class BinarySearchTree<T> {
 	}
 
 	public int size() {
-		return 0;
+		return this.root.size();
 	}
 
 	public int height() {
