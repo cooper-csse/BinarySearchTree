@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * 
@@ -9,14 +10,32 @@ import java.util.Iterator;
  * @param <T>
  */
 
-public class BinarySearchTree<T> {
+public class BinarySearchTree<T> implements Iterable<T> {
 	// Most of you will prefer to use NULL NODES once you see how to use them.
 	private final BinaryNode NULL_NODE = new BinaryNode();
 	private BinaryNode root;
 
-	// Most of you will prefer to use NULL NODES once you see how to use them.
-	// private final BinaryNode NULL_NODE = new BinaryNode();
+	private class ArrayListIterator implements Iterator<T> {
+		private ArrayList<T> array;
+		private int index = 0;
+		private int length;
+		// Store all the values in the tree in an ArrayList
+		public ArrayListIterator(BinarySearchTree binarySearchTree) {
+			this.array = binarySearchTree.toArrayList();
+			this.length = this.array.size();
+		}
 
+		@Override
+		public boolean hasNext() {
+			return this.index < this.length;
+		}
+
+		@Override
+		public T next() throws NoSuchElementException {
+			if (!this.hasNext()) throw new NoSuchElementException();
+			return this.array.get(this.index++);
+		}
+	}
 	public BinarySearchTree() {
 		root = NULL_NODE;
 	}
@@ -104,7 +123,7 @@ public class BinarySearchTree<T> {
 	}
 
 	public Iterator inefficientIterator() {
-		return null;
+		return new ArrayListIterator(this);
 	}
 
 	public Iterator preOrderIterator() {
@@ -115,8 +134,12 @@ public class BinarySearchTree<T> {
 		return null;
 	}
 
-	public ArrayList<Integer> toArrayList() {
-		return null;
+	public ArrayList<Object> toArrayList() {
+		ArrayList<Object> arrayList = new ArrayList<>();
+		for (Object item : this) {
+			arrayList.add(item);
+		}
+		return arrayList;
 	}
 
 	public T[] toArray() {
