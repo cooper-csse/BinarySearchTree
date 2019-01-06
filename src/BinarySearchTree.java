@@ -70,6 +70,10 @@ public class BinarySearchTree<T> {
 			return this == NULL_NODE ? 0 : 1 + this.left.size() + this.right.size();
 		}
 
+		public int height() {
+			return this == NULL_NODE ? 0 : 1 + Math.max(this.left.height(), this.right.height());
+		}
+		
 	// TODO: Implement your 3 iterator classes here, plus any other inner helper classes you'd like.
 	public boolean isEmpty() {
 		return false;
@@ -80,7 +84,7 @@ public class BinarySearchTree<T> {
 	}
 
 	public int height() {
-		return 0;
+		return this.root.height() - 1;
 	}
 
 	public boolean insert(T item) {
