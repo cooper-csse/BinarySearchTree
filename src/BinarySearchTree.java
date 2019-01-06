@@ -62,6 +62,37 @@ public class BinarySearchTree<T> implements Iterable<T> {
 			return node.data;
 		}
 	}
+
+	private class InOrderIterator implements Iterator<T> {
+		private Stack<BinaryNode> stack;
+
+		public InOrderIterator(BinaryNode node) {
+			this.stack = new Stack<>();
+			this.addLefts(node);
+		}
+
+		@Override
+		public boolean hasNext() {
+			return this.stack.size() != 0;
+		}
+
+		@Override
+		public T next() throws NoSuchElementException {
+			if (!this.hasNext()) throw new NoSuchElementException();
+			BinaryNode node = this.stack.pop();
+			this.addLefts(node.right);
+			return node.data;
+		}
+
+		private void addLefts(BinaryNode node) {
+			BinaryNode n = node;
+			while (n != NULL_NODE) {
+				this.stack.push(n);
+				n = n.left;
+			}
+		}
+	}
+
 	public BinarySearchTree() {
 		root = NULL_NODE;
 	}
@@ -159,7 +190,7 @@ public class BinarySearchTree<T> implements Iterable<T> {
 	}
 
 	public Iterator iterator() {
-		return null;
+		return new InOrderIterator(this.root);
 	}
 
 	public ArrayList<Object> toArrayList() {
