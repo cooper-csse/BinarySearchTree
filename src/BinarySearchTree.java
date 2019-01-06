@@ -204,8 +204,14 @@ public class BinarySearchTree<T> implements Iterable<T> {
 		return arrayList;
 	}
 
-	public T[] toArray() {
-		return null;
+	public Object[] toArray() {
+		Object[] array = new Object[this.size()];
+		int i = 0;
+		for (Object item : this) {
+			array[i] = item;
+			i++;
+		}
+		return array;
 	}
 
 }
