@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Stack;
 
 /**
  * 
@@ -34,6 +35,31 @@ public class BinarySearchTree<T> implements Iterable<T> {
 		public T next() throws NoSuchElementException {
 			if (!this.hasNext()) throw new NoSuchElementException();
 			return this.array.get(this.index++);
+		}
+	}
+
+	private class PreOrderIterator implements Iterator<T> {
+		private Stack<BinaryNode> stack;
+
+		public PreOrderIterator(BinaryNode node) {
+			this.stack = new Stack<>();
+			if (node != NULL_NODE) this.stack.push(node);
+		}
+
+		@Override
+		public boolean hasNext() {
+			return this.stack.size() != 0;
+		}
+
+		@Override
+		public T next() throws NoSuchElementException {
+			if (!this.hasNext()) throw new NoSuchElementException();
+			BinaryNode node = this.stack.pop();
+			if (node.right != NULL_NODE)
+				this.stack.push(node.getRight());
+			if (node.left != NULL_NODE)
+				this.stack.push(node.getLeft());
+			return node.data;
 		}
 	}
 	public BinarySearchTree() {
@@ -93,6 +119,8 @@ public class BinarySearchTree<T> implements Iterable<T> {
 			return this == NULL_NODE ? 0 : 1 + Math.max(this.left.height(), this.right.height());
 		}
 		
+	}
+
 	// TODO: Implement your 3 iterator classes here, plus any other inner helper classes you'd like.
 	public boolean isEmpty() {
 		return this.root == NULL_NODE;
@@ -127,7 +155,7 @@ public class BinarySearchTree<T> implements Iterable<T> {
 	}
 
 	public Iterator preOrderIterator() {
-		return null;
+		return new PreOrderIterator(this.root);
 	}
 
 	public Iterator iterator() {
