@@ -214,4 +214,11 @@ public class BinarySearchTree<T> implements Iterable<T> {
 		return array;
 	}
 
+	public String toString() {
+		String output = "";
+		for (Object item : this) {
+			output += item + ", ";
+		}
+		return "[" + output.substring(0, Math.max(0, output.length() - 2)) + "]";
+	}
 }
