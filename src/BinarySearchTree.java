@@ -178,6 +178,9 @@ public class BinarySearchTree<T> implements Iterable<T> {
 	}
 
 	public boolean containsNonBST(T item) {
+		for (Object node : this) {
+			if (node == item) return true;
+		}
 		return false;
 	}
 
