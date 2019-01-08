@@ -150,6 +150,32 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 			return this == NULL_NODE ? 0 : 1 + Math.max(this.left.height(), this.right.height());
 		}
 		
+		public BinaryNode insert(BinaryNode node, Result result) {
+			int direction = (int) Math.signum(node.data.compareTo(this.data));
+			if (direction == 0)
+				return NULL_NODE;
+			else if (direction > 0) {
+				if (this.right == NULL_NODE) {
+					this.right = node;
+					result.success = true;
+					return this.right;
+				}
+				return this.right.insert(node, result);
+			} else {
+				if (this.left == NULL_NODE) {
+					this.left = node;
+					result.success = true;
+					return this.left;
+				}
+				return this.left.insert(node, result);
+			}
+		}
+
+		public BinaryNode insert(T item, Result result) {
+			return this.insert(new BinaryNode(item), result);
+		}
+	private class Result {
+		private boolean success = false;
 	}
 
 	// TODO: Implement your 3 iterator classes here, plus any other inner helper classes you'd like.
@@ -165,8 +191,18 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 		return this.root.height() - 1;
 	}
 
-	public boolean insert(T item) {
-		return false;
+	/**
+	 * Insert a new BinaryNode into the correct sorted location
+	public boolean insert(T item) throws IllegalArgumentException {
+		if (item == null) throw new IllegalArgumentException();
+		if (this.root == NULL_NODE) {
+			this.root = new BinaryNode(item);
+			return true;
+		}
+		Result result = new Result();
+		BinaryNode node = this.root.insert(item, result);
+		if (result.success) this.changes++;
+		return result.success;
 	}
 
 	public boolean contains(T item) {
