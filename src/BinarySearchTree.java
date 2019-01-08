@@ -1,10 +1,11 @@
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Stack;
 
 /**
- * 
+ *
  * Implementation of most of the Set interface operations using a Binary Search Tree
  *
  * @author Matt Boutell and <<< YOUR NAME HERE >>>.
@@ -15,17 +16,21 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 	// Most of you will prefer to use NULL NODES once you see how to use them.
 	private final BinaryNode NULL_NODE = new BinaryNode();
 	private BinaryNode root;
+	private int changes = 0;
 
 	private class ArrayListIterator implements Iterator<T> {
 		private BinarySearchTree binarySearchTree;
 		private ArrayList<T> array;
 		private int index = 0;
 		private int length;
+		private int changes;
+
 		// Store all the values in the tree in an ArrayList
 		public ArrayListIterator(BinarySearchTree binarySearchTree) {
 			this.binarySearchTree = binarySearchTree;
 			this.array = binarySearchTree.toArrayList();
 			this.length = this.array.size();
+			this.changes = this.binarySearchTree.changes;
 		}
 
 		@Override
@@ -34,8 +39,9 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 		}
 
 		@Override
-		public T next() throws NoSuchElementException {
+		public T next() throws NoSuchElementException, ConcurrentModificationException {
 			if (!this.hasNext()) throw new NoSuchElementException();
+			if (this.changes != this.binarySearchTree.changes) throw new ConcurrentModificationException();
 			return this.array.get(this.index++);
 		}
 	}
@@ -43,10 +49,12 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 	private class PreOrderIterator implements Iterator<T> {
 		private Stack<BinaryNode> stack;
 		private BinarySearchTree binarySearchTree;
+		private int changes;
 
 		public PreOrderIterator(BinaryNode node, BinarySearchTree binarySearchTree) {
 			this.stack = new Stack<>();
 			this.binarySearchTree = binarySearchTree;
+			this.changes = this.binarySearchTree.changes;
 			if (node != NULL_NODE) this.stack.push(node);
 		}
 
@@ -56,8 +64,9 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 		}
 
 		@Override
-		public T next() throws NoSuchElementException {
+		public T next() throws NoSuchElementException, ConcurrentModificationException {
 			if (!this.hasNext()) throw new NoSuchElementException();
+			if (this.changes != this.binarySearchTree.changes) throw new ConcurrentModificationException();
 			BinaryNode node = this.stack.pop();
 			if (node.right != NULL_NODE)
 				this.stack.push(node.getRight());
@@ -70,10 +79,12 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 	private class InOrderIterator implements Iterator<T> {
 		private Stack<BinaryNode> stack;
 		private BinarySearchTree binarySearchTree;
+		private int changes;
 
 		public InOrderIterator(BinaryNode node, BinarySearchTree binarySearchTree) {
 			this.stack = new Stack<>();
 			this.binarySearchTree = binarySearchTree;
+			this.changes = this.binarySearchTree.changes;
 			this.addLefts(node);
 		}
 
@@ -83,7 +94,8 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 		}
 
 		@Override
-		public T next() throws NoSuchElementException {
+		public T next() throws NoSuchElementException, ConcurrentModificationException {
+			if (this.changes != this.binarySearchTree.changes) throw new ConcurrentModificationException();
 			if (!this.hasNext()) throw new NoSuchElementException();
 			BinaryNode node = this.stack.pop();
 			this.addLefts(node.right);
@@ -143,7 +155,7 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 		public void setLeft(BinaryNode left) {
 			this.left = left;
 		}
-		
+
 		public void setRight(BinaryNode right) {
 			this.right = right;
 		}
