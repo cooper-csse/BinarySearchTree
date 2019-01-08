@@ -1,10 +1,11 @@
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Stack;
 
 /**
- * 
+ *
  * Implementation of most of the Set interface operations using a Binary Search Tree
  *
  * @author Matt Boutell and <<< YOUR NAME HERE >>>.
@@ -15,17 +16,24 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 	// Most of you will prefer to use NULL NODES once you see how to use them.
 	private final BinaryNode NULL_NODE = new BinaryNode();
 	private BinaryNode root;
+	private int changes = 0;
 
+	/**
+	 * Inefficient Iterator that puts the whole BST into an ArrayList before traversing
+	 */
 	private class ArrayListIterator implements Iterator<T> {
 		private BinarySearchTree binarySearchTree;
 		private ArrayList<T> array;
 		private int index = 0;
 		private int length;
+		private int changes;
+
 		// Store all the values in the tree in an ArrayList
 		public ArrayListIterator(BinarySearchTree binarySearchTree) {
 			this.binarySearchTree = binarySearchTree;
 			this.array = binarySearchTree.toArrayList();
 			this.length = this.array.size();
+			this.changes = this.binarySearchTree.changes;
 		}
 
 		@Override
@@ -34,19 +42,27 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 		}
 
 		@Override
-		public T next() throws NoSuchElementException {
+		public T next() throws NoSuchElementException, ConcurrentModificationException {
 			if (!this.hasNext()) throw new NoSuchElementException();
+			if (this.changes != this.binarySearchTree.changes) throw new ConcurrentModificationException();
 			return this.array.get(this.index++);
 		}
 	}
 
+	/**
+	 * Lazy Iterator that efficiently traverses the BST using PreOrder
+	 */
 	private class PreOrderIterator implements Iterator<T> {
 		private Stack<BinaryNode> stack;
 		private BinarySearchTree binarySearchTree;
+		private T lastNext = null;
+		private int changes;
+		private boolean nextSinceRemove = false;
 
 		public PreOrderIterator(BinaryNode node, BinarySearchTree binarySearchTree) {
 			this.stack = new Stack<>();
 			this.binarySearchTree = binarySearchTree;
+			this.changes = this.binarySearchTree.changes;
 			if (node != NULL_NODE) this.stack.push(node);
 		}
 
@@ -56,24 +72,43 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 		}
 
 		@Override
-		public T next() throws NoSuchElementException {
+		public T next() throws NoSuchElementException, ConcurrentModificationException {
 			if (!this.hasNext()) throw new NoSuchElementException();
+			if (this.changes != this.binarySearchTree.changes) throw new ConcurrentModificationException();
 			BinaryNode node = this.stack.pop();
+			this.nextSinceRemove = true;
 			if (node.right != NULL_NODE)
 				this.stack.push(node.getRight());
 			if (node.left != NULL_NODE)
 				this.stack.push(node.getLeft());
+			this.lastNext = node.data;
 			return node.data;
+		}
+
+		@Override
+		public void remove() throws NoSuchElementException, ConcurrentModificationException, IllegalStateException {
+			if (!this.nextSinceRemove) throw new IllegalStateException();
+			if (!this.hasNext()) throw new NoSuchElementException();
+			if (this.changes != this.binarySearchTree.changes) throw new ConcurrentModificationException();
+			this.nextSinceRemove = false;
+			this.binarySearchTree.remove(this.lastNext);
 		}
 	}
 
+	/**
+	 * Lazy Iterator that efficiently traverses the BST using InOrder
+	 */
 	private class InOrderIterator implements Iterator<T> {
 		private Stack<BinaryNode> stack;
 		private BinarySearchTree binarySearchTree;
+		private T lastNext = null;
+		private int changes;
+		private boolean nextSinceRemove = false;
 
 		public InOrderIterator(BinaryNode node, BinarySearchTree binarySearchTree) {
 			this.stack = new Stack<>();
 			this.binarySearchTree = binarySearchTree;
+			this.changes = this.binarySearchTree.changes;
 			this.addLefts(node);
 		}
 
@@ -83,11 +118,23 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 		}
 
 		@Override
-		public T next() throws NoSuchElementException {
+		public T next() throws NoSuchElementException, ConcurrentModificationException {
+			if (this.changes != this.binarySearchTree.changes) throw new ConcurrentModificationException();
 			if (!this.hasNext()) throw new NoSuchElementException();
 			BinaryNode node = this.stack.pop();
+			this.nextSinceRemove = true;
 			this.addLefts(node.right);
+			this.lastNext = node.data;
 			return node.data;
+		}
+
+		@Override
+		public void remove() throws NoSuchElementException, ConcurrentModificationException, IllegalStateException {
+			if (!this.nextSinceRemove) throw new IllegalStateException();
+			if (!this.hasNext()) throw new NoSuchElementException();
+			if (this.changes != this.binarySearchTree.changes) throw new ConcurrentModificationException();
+			this.nextSinceRemove = false;
+			this.binarySearchTree.remove(this.lastNext);
 		}
 
 		private void addLefts(BinaryNode node) {
@@ -143,7 +190,7 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 		public void setLeft(BinaryNode left) {
 			this.left = left;
 		}
-		
+
 		public void setRight(BinaryNode right) {
 			this.right = right;
 		}
@@ -155,7 +202,13 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 		public int height() {
 			return this == NULL_NODE ? 0 : 1 + Math.max(this.left.height(), this.right.height());
 		}
-		
+
+		/**
+		 * Insert a new BinaryNode into the correct sorted location
+		 * @param node The new BinaryNode you are inserting
+		 * @param result Boolean wrapper to keep track of the success
+		 * @return The node that was inserted
+		 */
 		public BinaryNode insert(BinaryNode node, Result result) {
 			int direction = (int) Math.signum(node.data.compareTo(this.data));
 			if (direction == 0)
@@ -180,6 +233,13 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 		public BinaryNode insert(T item, Result result) {
 			return this.insert(new BinaryNode(item), result);
 		}
+
+		/**
+		 * Search the BST for a specific item
+		 * @param item The item you are looking for
+		 * @param result boolean wrapper to keep track of the success
+		 * @return The node if it was found
+		 */
 		public BinaryNode contains(T item, Result result) {
 			if (this == NULL_NODE) return NULL_NODE;
 			int direction = (int) Math.signum(item.compareTo(this.data));
@@ -191,6 +251,15 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 			else return this.left.contains(item, result);
 		}
 
+		/**
+		 * Remove an item from the BST and reorganize the tree
+		 * @param item The new BinaryNode you are inserting
+		 * @param result boolean wrapper to keep track of the success
+		 * @param binarySearchTree Pointer to the BST
+		 * @param parent The node's parent, used for recursion
+		 * @param left If the last recursive operation moved left or right
+		 * @return The node that was inserted
+		 */
 		public BinaryNode remove(T item, Result result, BinarySearchTree binarySearchTree, BinaryNode parent, boolean left) {
 			if (this == NULL_NODE) return NULL_NODE;
 			int direction = (int) Math.signum(item.compareTo(this.data));
@@ -219,6 +288,11 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 			return this.remove(item, result, binarySearchTree, NULL_NODE, true);
 		}
 
+		/**
+		 * Used to find and pop the furthest right child node of any other node
+		 * @param parent The parent node for recursion
+		 * @return The node furthest to the right
+		 */
 		private BinaryNode popFurthestRight(BinaryNode parent) {
 			if (this == NULL_NODE) return NULL_NODE;
 			if (this.right == NULL_NODE) {
@@ -229,6 +303,9 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 		}
 	}
 
+	/**
+	 * Boolean wrapper class, used to keep track of success in methods
+	 */
 	private class Result {
 		private boolean success = false;
 	}
@@ -238,16 +315,26 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 		return this.root == NULL_NODE;
 	}
 
+	/**
+	 * @return The number of nodes in the tree
+	 */
 	public int size() {
 		return this.root.size();
 	}
 
+	/**
+	 * @return How many layers there are in the tree
+	 */
 	public int height() {
 		return this.root.height() - 1;
 	}
 
 	/**
 	 * Insert a new BinaryNode into the correct sorted location
+	 * @param item The new item you are inserting
+	 * @return True if the item was successfully inserted
+	 * @throws IllegalArgumentException
+	 */
 	public boolean insert(T item) throws IllegalArgumentException {
 		if (item == null) throw new IllegalArgumentException();
 		if (this.root == NULL_NODE) {
@@ -260,6 +347,11 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 		return result.success;
 	}
 
+	/**
+	 * Search the BST for a specific item
+	 * @param item The item we are searching for
+	 * @return True if the item was found in the tree
+	 */
 	public boolean contains(T item) {
 		Result result = new Result();
 		BinaryNode node = this.root.contains(item, result);
@@ -268,6 +360,10 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 
 	/**
 	 * Remove an item from the BST
+	 * @param item The item you are trying to remove
+	 * @return True if the item was successfully removed from the tree
+	 * @throws IllegalArgumentException
+	 */
 	public boolean remove(T item) throws IllegalArgumentException {
 		if (item == null) throw new IllegalArgumentException();
 		Result result = new Result();
@@ -276,6 +372,11 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 		return result.success;
 	}
 
+	/**
+	 * Inefficiently search for an item in the BT
+	 * @param item The item you are searching for
+	 * @return True if the item was found
+	 */
 	public boolean containsNonBST(T item) {
 		for (Object node : this) {
 			if (node == item) return true;
@@ -283,18 +384,31 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 		return false;
 	}
 
+	/**
+	 * @return An iterator using an ArrayList
+	 */
 	public Iterator inefficientIterator() {
 		return new ArrayListIterator(this);
 	}
 
+	/**
+	 * @return An iterator using a preOrder traversal
+	 */
 	public Iterator preOrderIterator() {
 		return new PreOrderIterator(this.root, this);
 	}
 
+	/**
+	 * @return An iterator using an inOrder traversal
+	 */
 	public Iterator iterator() {
 		return new InOrderIterator(this.root, this);
 	}
 
+	/**
+	 * Convert the BST to an ArrayList
+	 * @return The ArrayList
+	 */
 	public ArrayList<Object> toArrayList() {
 		ArrayList<Object> arrayList = new ArrayList<>();
 		for (Object item : this) {
@@ -303,6 +417,10 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 		return arrayList;
 	}
 
+	/**
+	 * Convert the BST to an Array
+	 * @return The Array
+	 */
 	public Object[] toArray() {
 		Object[] array = new Object[this.size()];
 		int i = 0;
@@ -313,6 +431,10 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 		return array;
 	}
 
+	/**
+	 * Convert the BST to a string containing all the items
+	 * @return The string containing all the items
+	 */
 	public String toString() {
 		String output = "";
 		for (Object item : this) {
