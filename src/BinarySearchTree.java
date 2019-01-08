@@ -17,11 +17,13 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 	private BinaryNode root;
 
 	private class ArrayListIterator implements Iterator<T> {
+		private BinarySearchTree binarySearchTree;
 		private ArrayList<T> array;
 		private int index = 0;
 		private int length;
 		// Store all the values in the tree in an ArrayList
 		public ArrayListIterator(BinarySearchTree binarySearchTree) {
+			this.binarySearchTree = binarySearchTree;
 			this.array = binarySearchTree.toArrayList();
 			this.length = this.array.size();
 		}
@@ -40,9 +42,11 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 
 	private class PreOrderIterator implements Iterator<T> {
 		private Stack<BinaryNode> stack;
+		private BinarySearchTree binarySearchTree;
 
-		public PreOrderIterator(BinaryNode node) {
+		public PreOrderIterator(BinaryNode node, BinarySearchTree binarySearchTree) {
 			this.stack = new Stack<>();
+			this.binarySearchTree = binarySearchTree;
 			if (node != NULL_NODE) this.stack.push(node);
 		}
 
@@ -65,9 +69,11 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 
 	private class InOrderIterator implements Iterator<T> {
 		private Stack<BinaryNode> stack;
+		private BinarySearchTree binarySearchTree;
 
-		public InOrderIterator(BinaryNode node) {
+		public InOrderIterator(BinaryNode node, BinarySearchTree binarySearchTree) {
 			this.stack = new Stack<>();
+			this.binarySearchTree = binarySearchTree;
 			this.addLefts(node);
 		}
 
@@ -282,11 +288,11 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 	}
 
 	public Iterator preOrderIterator() {
-		return new PreOrderIterator(this.root);
+		return new PreOrderIterator(this.root, this);
 	}
 
 	public Iterator iterator() {
-		return new InOrderIterator(this.root);
+		return new InOrderIterator(this.root, this);
 	}
 
 	public ArrayList<Object> toArrayList() {
