@@ -8,7 +8,7 @@ import java.util.Stack;
  *
  * Implementation of most of the Set interface operations using a Binary Search Tree
  *
- * @author Matt Boutell and <<< YOUR NAME HERE >>>.
+ * @author Matt Boutell and Cooper Anderson.
  * @param <T>
  */
 
