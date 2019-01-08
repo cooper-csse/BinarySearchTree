@@ -174,6 +174,17 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 		public BinaryNode insert(T item, Result result) {
 			return this.insert(new BinaryNode(item), result);
 		}
+		public BinaryNode contains(T item, Result result) {
+			if (this == NULL_NODE) return NULL_NODE;
+			int direction = (int) Math.signum(item.compareTo(this.data));
+			if (direction == 0) {
+				result.success = true;
+				return this;
+			}else if (direction > 0)
+				return this.right.contains(item, result);
+			else return this.left.contains(item, result);
+		}
+
 	private class Result {
 		private boolean success = false;
 	}
@@ -206,7 +217,9 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 	}
 
 	public boolean contains(T item) {
-		return false;
+		Result result = new Result();
+		BinaryNode node = this.root.contains(item, result);
+		return result.success;
 	}
 
 	public boolean remove(T item) {
