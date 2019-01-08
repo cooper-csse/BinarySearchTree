@@ -11,7 +11,7 @@ import java.util.Stack;
  * @param <T>
  */
 
-public class BinarySearchTree<T> implements Iterable<T> {
+public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 	// Most of you will prefer to use NULL NODES once you see how to use them.
 	private final BinaryNode NULL_NODE = new BinaryNode();
 	private BinaryNode root;
