@@ -11,17 +11,19 @@ import java.util.Stack;
  * @param <T>
  */
 
-public class BinarySearchTree<T> implements Iterable<T> {
+public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 	// Most of you will prefer to use NULL NODES once you see how to use them.
 	private final BinaryNode NULL_NODE = new BinaryNode();
 	private BinaryNode root;
 
 	private class ArrayListIterator implements Iterator<T> {
+		private BinarySearchTree binarySearchTree;
 		private ArrayList<T> array;
 		private int index = 0;
 		private int length;
 		// Store all the values in the tree in an ArrayList
 		public ArrayListIterator(BinarySearchTree binarySearchTree) {
+			this.binarySearchTree = binarySearchTree;
 			this.array = binarySearchTree.toArrayList();
 			this.length = this.array.size();
 		}
@@ -40,9 +42,11 @@ public class BinarySearchTree<T> implements Iterable<T> {
 
 	private class PreOrderIterator implements Iterator<T> {
 		private Stack<BinaryNode> stack;
+		private BinarySearchTree binarySearchTree;
 
-		public PreOrderIterator(BinaryNode node) {
+		public PreOrderIterator(BinaryNode node, BinarySearchTree binarySearchTree) {
 			this.stack = new Stack<>();
+			this.binarySearchTree = binarySearchTree;
 			if (node != NULL_NODE) this.stack.push(node);
 		}
 
@@ -65,9 +69,11 @@ public class BinarySearchTree<T> implements Iterable<T> {
 
 	private class InOrderIterator implements Iterator<T> {
 		private Stack<BinaryNode> stack;
+		private BinarySearchTree binarySearchTree;
 
-		public InOrderIterator(BinaryNode node) {
+		public InOrderIterator(BinaryNode node, BinarySearchTree binarySearchTree) {
 			this.stack = new Stack<>();
+			this.binarySearchTree = binarySearchTree;
 			this.addLefts(node);
 		}
 
@@ -150,6 +156,81 @@ public class BinarySearchTree<T> implements Iterable<T> {
 			return this == NULL_NODE ? 0 : 1 + Math.max(this.left.height(), this.right.height());
 		}
 		
+		public BinaryNode insert(BinaryNode node, Result result) {
+			int direction = (int) Math.signum(node.data.compareTo(this.data));
+			if (direction == 0)
+				return NULL_NODE;
+			else if (direction > 0) {
+				if (this.right == NULL_NODE) {
+					this.right = node;
+					result.success = true;
+					return this.right;
+				}
+				return this.right.insert(node, result);
+			} else {
+				if (this.left == NULL_NODE) {
+					this.left = node;
+					result.success = true;
+					return this.left;
+				}
+				return this.left.insert(node, result);
+			}
+		}
+
+		public BinaryNode insert(T item, Result result) {
+			return this.insert(new BinaryNode(item), result);
+		}
+		public BinaryNode contains(T item, Result result) {
+			if (this == NULL_NODE) return NULL_NODE;
+			int direction = (int) Math.signum(item.compareTo(this.data));
+			if (direction == 0) {
+				result.success = true;
+				return this;
+			}else if (direction > 0)
+				return this.right.contains(item, result);
+			else return this.left.contains(item, result);
+		}
+
+		public BinaryNode remove(T item, Result result, BinarySearchTree binarySearchTree, BinaryNode parent, boolean left) {
+			if (this == NULL_NODE) return NULL_NODE;
+			int direction = (int) Math.signum(item.compareTo(this.data));
+			if (direction == 0) {
+				result.success = true;
+				BinaryNode predecessor;
+				if (this.left != NULL_NODE && this.right != NULL_NODE)
+					predecessor = this.left != NULL_NODE ? this.left.popFurthestRight(this.left) : this.right;
+				else
+					predecessor = this.left != NULL_NODE ? this.left : this.right;
+				if (this.left == predecessor) this.left = NULL_NODE;
+				if (parent == NULL_NODE && binarySearchTree != null) binarySearchTree.root = predecessor;
+				else {
+					if (left) parent.left = predecessor;
+					else parent.right = predecessor;
+				}
+				if (this.left != NULL_NODE) predecessor.insert(this.left, new Result());
+				if (this.right != NULL_NODE) predecessor.insert(this.right, new Result());
+				return this;
+			}else if (direction > 0)
+				return this.right.remove(item, result, null, this, false);
+			else return this.left.remove(item, result, null, this, true);
+		}
+
+		public BinaryNode remove(T item, Result result, BinarySearchTree binarySearchTree) {
+			return this.remove(item, result, binarySearchTree, NULL_NODE, true);
+		}
+
+		private BinaryNode popFurthestRight(BinaryNode parent) {
+			if (this == NULL_NODE) return NULL_NODE;
+			if (this.right == NULL_NODE) {
+				parent.right = NULL_NODE;
+				return this;
+			}
+			return this.right.popFurthestRight(parent);
+		}
+	}
+
+	private class Result {
+		private boolean success = false;
 	}
 
 	// TODO: Implement your 3 iterator classes here, plus any other inner helper classes you'd like.
@@ -165,16 +246,34 @@ public class BinarySearchTree<T> implements Iterable<T> {
 		return this.root.height() - 1;
 	}
 
-	public boolean insert(T item) {
-		return false;
+	/**
+	 * Insert a new BinaryNode into the correct sorted location
+	public boolean insert(T item) throws IllegalArgumentException {
+		if (item == null) throw new IllegalArgumentException();
+		if (this.root == NULL_NODE) {
+			this.root = new BinaryNode(item);
+			return true;
+		}
+		Result result = new Result();
+		BinaryNode node = this.root.insert(item, result);
+		if (result.success) this.changes++;
+		return result.success;
 	}
 
 	public boolean contains(T item) {
-		return false;
+		Result result = new Result();
+		BinaryNode node = this.root.contains(item, result);
+		return result.success;
 	}
 
-	public boolean remove(T item) {
-		return false;
+	/**
+	 * Remove an item from the BST
+	public boolean remove(T item) throws IllegalArgumentException {
+		if (item == null) throw new IllegalArgumentException();
+		Result result = new Result();
+		BinaryNode node = this.root.remove(item, result, this);
+		if (result.success) this.changes++;
+		return result.success;
 	}
 
 	public boolean containsNonBST(T item) {
@@ -189,11 +288,11 @@ public class BinarySearchTree<T> implements Iterable<T> {
 	}
 
 	public Iterator preOrderIterator() {
-		return new PreOrderIterator(this.root);
+		return new PreOrderIterator(this.root, this);
 	}
 
 	public Iterator iterator() {
-		return new InOrderIterator(this.root);
+		return new InOrderIterator(this.root, this);
 	}
 
 	public ArrayList<Object> toArrayList() {
