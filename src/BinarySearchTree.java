@@ -185,6 +185,44 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 			else return this.left.contains(item, result);
 		}
 
+		public BinaryNode remove(T item, Result result, BinarySearchTree binarySearchTree, BinaryNode parent, boolean left) {
+			if (this == NULL_NODE) return NULL_NODE;
+			int direction = (int) Math.signum(item.compareTo(this.data));
+			if (direction == 0) {
+				result.success = true;
+				BinaryNode predecessor;
+				if (this.left != NULL_NODE && this.right != NULL_NODE)
+					predecessor = this.left != NULL_NODE ? this.left.popFurthestRight(this.left) : this.right;
+				else
+					predecessor = this.left != NULL_NODE ? this.left : this.right;
+				if (this.left == predecessor) this.left = NULL_NODE;
+				if (parent == NULL_NODE && binarySearchTree != null) binarySearchTree.root = predecessor;
+				else {
+					if (left) parent.left = predecessor;
+					else parent.right = predecessor;
+				}
+				if (this.left != NULL_NODE) predecessor.insert(this.left, new Result());
+				if (this.right != NULL_NODE) predecessor.insert(this.right, new Result());
+				return this;
+			}else if (direction > 0)
+				return this.right.remove(item, result, null, this, false);
+			else return this.left.remove(item, result, null, this, true);
+		}
+
+		public BinaryNode remove(T item, Result result, BinarySearchTree binarySearchTree) {
+			return this.remove(item, result, binarySearchTree, NULL_NODE, true);
+		}
+
+		private BinaryNode popFurthestRight(BinaryNode parent) {
+			if (this == NULL_NODE) return NULL_NODE;
+			if (this.right == NULL_NODE) {
+				parent.right = NULL_NODE;
+				return this;
+			}
+			return this.right.popFurthestRight(parent);
+		}
+	}
+
 	private class Result {
 		private boolean success = false;
 	}
@@ -222,8 +260,14 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 		return result.success;
 	}
 
-	public boolean remove(T item) {
-		return false;
+	/**
+	 * Remove an item from the BST
+	public boolean remove(T item) throws IllegalArgumentException {
+		if (item == null) throw new IllegalArgumentException();
+		Result result = new Result();
+		BinaryNode node = this.root.remove(item, result, this);
+		if (result.success) this.changes++;
+		return result.success;
 	}
 
 	public boolean containsNonBST(T item) {
