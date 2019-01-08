@@ -49,7 +49,9 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 	private class PreOrderIterator implements Iterator<T> {
 		private Stack<BinaryNode> stack;
 		private BinarySearchTree binarySearchTree;
+		private T lastNext = null;
 		private int changes;
+		private boolean nextSinceRemove = false;
 
 		public PreOrderIterator(BinaryNode node, BinarySearchTree binarySearchTree) {
 			this.stack = new Stack<>();
@@ -68,18 +70,31 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 			if (!this.hasNext()) throw new NoSuchElementException();
 			if (this.changes != this.binarySearchTree.changes) throw new ConcurrentModificationException();
 			BinaryNode node = this.stack.pop();
+			this.nextSinceRemove = true;
 			if (node.right != NULL_NODE)
 				this.stack.push(node.getRight());
 			if (node.left != NULL_NODE)
 				this.stack.push(node.getLeft());
+			this.lastNext = node.data;
 			return node.data;
+		}
+
+		@Override
+		public void remove() throws NoSuchElementException, ConcurrentModificationException, IllegalStateException {
+			if (!this.nextSinceRemove) throw new IllegalStateException();
+			if (!this.hasNext()) throw new NoSuchElementException();
+			if (this.changes != this.binarySearchTree.changes) throw new ConcurrentModificationException();
+			this.nextSinceRemove = false;
+			this.binarySearchTree.remove(this.lastNext);
 		}
 	}
 
 	private class InOrderIterator implements Iterator<T> {
 		private Stack<BinaryNode> stack;
 		private BinarySearchTree binarySearchTree;
+		private T lastNext = null;
 		private int changes;
+		private boolean nextSinceRemove = false;
 
 		public InOrderIterator(BinaryNode node, BinarySearchTree binarySearchTree) {
 			this.stack = new Stack<>();
@@ -98,8 +113,19 @@ public class BinarySearchTree<T extends Comparable<T>> implements Iterable<T> {
 			if (this.changes != this.binarySearchTree.changes) throw new ConcurrentModificationException();
 			if (!this.hasNext()) throw new NoSuchElementException();
 			BinaryNode node = this.stack.pop();
+			this.nextSinceRemove = true;
 			this.addLefts(node.right);
+			this.lastNext = node.data;
 			return node.data;
+		}
+
+		@Override
+		public void remove() throws NoSuchElementException, ConcurrentModificationException, IllegalStateException {
+			if (!this.nextSinceRemove) throw new IllegalStateException();
+			if (!this.hasNext()) throw new NoSuchElementException();
+			if (this.changes != this.binarySearchTree.changes) throw new ConcurrentModificationException();
+			this.nextSinceRemove = false;
+			this.binarySearchTree.remove(this.lastNext);
 		}
 
 		private void addLefts(BinaryNode node) {
